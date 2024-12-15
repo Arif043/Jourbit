@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:jourbit/pages/journaling_view_page.dart';
+
+import '../view_models/note_viewmodel.dart';
 
 class NoteWidget extends StatefulWidget {
 
   final String title, subtitle;
   final bool highlight;
-  final JournalingViewPage rootPage;
-  final noteControllers = List.generate(6, (_) => TextEditingController());
   final Color _primaryColor, _seconderyColor;
+  final NoteViewModel viewModel;
 
-  NoteWidget({super.key, required this.title, required this.subtitle, required this.rootPage, this.highlight = true})
+  NoteWidget({super.key, required this.title, required this.subtitle, required this.viewModel, this.highlight = true})
   : _primaryColor = highlight ? Colors.orange[800]! : Colors.black,
     _seconderyColor = highlight ? Colors.orangeAccent[100]! : Colors.transparent;
 
@@ -19,13 +19,29 @@ class NoteWidget extends StatefulWidget {
 
 class _NoteWidgetState extends State<NoteWidget> {
 
-  late VoidCallback listener;
+  late final List<TextEditingController> _noteControllers;
+
+  @override
+  void initState() {
+    super.initState();
+    _noteControllers = List.generate(6, (_) => TextEditingController());
+    _initializeData();
+  }
 
   @override
   void dispose() {
     super.dispose();
-    for (var controller in widget.noteControllers) {
+    for (var controller in _noteControllers) {
       controller.dispose();
+    }
+  }
+
+  void _initializeData() async {
+    var data = await widget.viewModel.fetchData();
+    for (int i = 0; i < _noteControllers.length; i++) {
+      if (mounted) {
+        setState(() => _noteControllers[i].text = data?[i] ?? '');
+      }
     }
   }
 
@@ -52,14 +68,15 @@ class _NoteWidgetState extends State<NoteWidget> {
                       padding: const EdgeInsets.all(8.0),
                       child: Container(
                         color: widget._seconderyColor,
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         child: Text((i+1).toString(), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: widget._primaryColor)),
                       ),
                     ),
                   Flexible(
                     child: TextField(
-                      // controller: _noteControllers[i],
-                      decoration: InputDecoration(
+                      onChanged: (_) => widget.viewModel.updateEntries(_noteControllers.map((ctlr) => ctlr.text).toList()),
+                      controller: _noteControllers[i],
+                      decoration: const InputDecoration(
                           border: OutlineInputBorder(
                               borderSide: BorderSide(color: Colors.red, width: 2)
                           )
@@ -73,6 +90,4 @@ class _NoteWidgetState extends State<NoteWidget> {
       ),
     );
   }
-
-
 }

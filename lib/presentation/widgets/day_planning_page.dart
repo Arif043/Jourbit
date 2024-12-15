@@ -1,20 +1,19 @@
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:jourbit/data/happiness.dart';
-import 'package:jourbit/pages/journaling_view_page.dart';
-import 'package:jourbit/widgets/note_widget.dart';
+import 'package:jourbit/data/journaling_repository.dart';
+import 'package:jourbit/presentation/view_models/note_viewmodel.dart';
+import 'package:jourbit/presentation/widgets/note_widget.dart';
+
+import '../../data/models/enums.dart';
 
 class DayPlanningPage extends StatefulWidget {
 
   static const double _iconSize = 48;
-  final JournalingViewPage rootPage;
+  static final JournalingRepository _repository = JournalingRepository();
 
-  const DayPlanningPage({super.key, required this.rootPage});
-
-  List<TextEditingController> getController() {
-    return [];
-  }
+  const DayPlanningPage({super.key});
 
   @override
   State<DayPlanningPage> createState() => _DayPlanningPageState();
@@ -25,19 +24,36 @@ class _DayPlanningPageState extends State<DayPlanningPage> {
   DailyHappiness? _selectedHappiness;
 
   @override
+  void initState() {
+    super.initState();
+    _initHappinessButtons();
+  }
+
+  void _initHappinessButtons() async {
+    final res = await DayPlanningPage._repository.fetchDailyDayCheck();
+    if (mounted) {
+      setState(() => _selectedHappiness = res);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text('Tagesplanung', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28),),
+          padding: const EdgeInsets.all(8.0),
+          child: Text(context.tr('daily_planning'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),),
         ),
-        NoteWidget(title: 'Tagesziele', subtitle: 'Wo liegt heute mein Fokus',),
-        NoteWidget(title: 'Erkenntnisse', subtitle: 'Was habe ich gelernt?', highlight: false,),
-        NoteWidget(title: 'Optimierung', subtitle: 'Woran möchte ich arbeiten?', highlight: false,),
-        NoteWidget(title: 'Dankbarkeit', subtitle: 'Wofür bin ich dankbar?', highlight: false,),
-        NoteWidget(title: 'Erfolge', subtitle: 'Was ist mir gut gelungen?',),
+        NoteWidget(title: context.tr('daily_goals'), subtitle: context.tr('daily_goals_subtitle'), viewModel: NoteViewModel.createDailyGoalsViewModel(),),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(context.tr('daily_reflection'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),),
+        ),
+        NoteWidget(title: context.tr('daily_insights'), subtitle: context.tr('daily_insights_subtitle'), highlight: false, viewModel: NoteViewModel.createDailyInsightsViewModel(),),
+        NoteWidget(title: context.tr('daily_optimizations'), subtitle: context.tr('daily_optimizations_subtitle'), highlight: false, viewModel: NoteViewModel.createDailyOptimizationViewModel(),),
+        NoteWidget(title: context.tr('daily_gratitudes'), subtitle: context.tr('daily_gratitudes_subtitle'), highlight: false, viewModel: NoteViewModel.createDailyGratitudeViewModel(),),
+        NoteWidget(title: context.tr('daily_success'), subtitle: context.tr('daily_success_subtitle'), viewModel: NoteViewModel.createDailySuccessViewModel(),),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           customPaymentCardButton('assets/images/very_unhappy.svg', DailyHappiness.veryUnhappy),
           customPaymentCardButton('assets/images/unhappy.svg', DailyHappiness.unhappy),
@@ -60,6 +76,7 @@ class _DayPlanningPageState extends State<DayPlanningPage> {
           setState(() {
             _selectedHappiness = happiness;
           });
+            DayPlanningPage._repository.updateDailyDayCheck(happiness);
         },
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),

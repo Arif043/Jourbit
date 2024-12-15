@@ -1,20 +1,22 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:jiffy/jiffy.dart';
-import 'package:jourbit/data_loader.dart';
-import 'package:jourbit/pages/habit_view_page.dart';
-import 'package:jourbit/pages/journaling_view_page.dart';
-import 'package:jourbit/service/day.dart';
-import 'package:jourbit/service/state.dart' as my_lib;
+import 'package:jourbit/data/local_datasource.dart';
+import 'package:jourbit/presentation/widgets/habit_view_page.dart';
+import 'package:jourbit/presentation/widgets/journaling_view_page.dart';
 
 void main() async {
-  initDatabase();
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
+
+  runApp(EasyLocalization(
+    supportedLocales: [Locale('en', 'US'), Locale('de', 'DE')],
+    path: 'assets/lang',
+    fallbackLocale: Locale('en', 'US'),
+    child: const MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
-
-  static Jiffy date = Jiffy.now();
-  static my_lib.State state = Day();
 
   const MyApp({super.key});
 
@@ -22,6 +24,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
       title: 'Me',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -42,7 +47,27 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      debugPrint('CLOSE');
+      LocalDatasource().close();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +82,8 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
               TabBar(
                 indicatorColor: Colors.white,
                 tabs: [
-                  Tab(icon: Icon(Icons.home), text: 'Habit'),
-                  Tab(icon: Icon(Icons.star), text: 'Journaling'),
+                  Tab(icon: Image.asset('assets/images/habit.png'), text: context.tr('habit')),
+                  Tab(icon: Image.asset('assets/images/journal.png'), text: context.tr('journaling')),
                 ],
                 labelColor: Colors.blue,
                 unselectedLabelColor: Colors.grey,
