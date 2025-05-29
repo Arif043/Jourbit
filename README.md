@@ -1,6 +1,6 @@
-# me
+# jourbit
 
-My personal App
+A new Flutter project.
 
 ## Getting Started
 

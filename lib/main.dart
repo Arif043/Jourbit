@@ -1,18 +1,31 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:jourbit/data/local_datasource.dart';
-import 'package:jourbit/presentation/widgets/habit_view_page.dart';
-import 'package:jourbit/presentation/widgets/journaling_view_page.dart';
+import 'package:get_it/get_it.dart';
+import 'package:jourbit/data/habit_repository.dart';
+import 'package:jourbit/data/journal_repository.dart';
+import 'package:jourbit/presentation/view/habit/habit_view_page.dart';
+import 'package:jourbit/presentation/view/journal/journaling_view_page.dart';
+import 'package:jourbit/presentation/view_model/habit/habit_view_page_view_model.dart';
+import 'package:jourbit/presentation/view_model/journal/journaling_view_page_view_model.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GetIt.I.registerSingleton<JournalRepository>(JournalRepository());
+  GetIt.I.registerSingleton<HabitRepository>(HabitRepository());
   await EasyLocalization.ensureInitialized();
 
   runApp(EasyLocalization(
     supportedLocales: [Locale('en', 'US'), Locale('de', 'DE')],
     path: 'assets/lang',
     fallbackLocale: Locale('en', 'US'),
-    child: const MyApp(),
+    child: MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => JournalingViewPageViewModel(GetIt.I.get<JournalRepository>())),
+        ChangeNotifierProvider(create: (_) => HabitViewPageViewModel(GetIt.I.get<HabitRepository>()))
+      ],
+      child: const MyApp(),
+    ),
   ));
 }
 
@@ -20,20 +33,19 @@ class MyApp extends StatelessWidget {
 
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      title: 'Me',
+      title: 'Jourbit',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyanAccent),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellow),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Me'),
+      home: const MyHomePage(title: 'Jourbit'),
     );
   }
 }
@@ -64,8 +76,8 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.detached) {
-      debugPrint('CLOSE');
-      LocalDatasource().close();
+      // debugPrint('CLOSE');
+      // LocalDatasource().close();
     }
   }
 
@@ -89,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                 unselectedLabelColor: Colors.grey,
               ),
               // Inhalt der Tabs
-              Expanded(
+              const Expanded(
                 child: TabBarView(
                   children: [
                     HabitViewPage(),
