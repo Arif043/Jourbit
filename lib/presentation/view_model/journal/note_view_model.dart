@@ -49,5 +49,6 @@ class NoteViewModel extends ChangeNotifier{
   factory NoteViewModel.createMonthlyGoalsViewModel(JournalRepository repository) => NoteViewModel(repository.updateMonthlyGoals, repository.fetchMonthlyGoals);
   factory NoteViewModel.createMonthlyEventsViewModel(JournalRepository repository) => NoteViewModel(repository.updateMonthlyEvents, repository.fetchMonthlyEvents);
 
-  factory NoteViewModel.nullObject() => NoteViewModel((v){}, (){return Future.value();});
+  factory NoteViewModel.nullObject() =>
+      NoteViewModel((v) {}, () => Future<List<String>?>.value(null));
 }
